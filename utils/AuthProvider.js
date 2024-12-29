@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiClient, getToken } from "./axios";
+import { apiClient, getToken, writeLog } from "./axios"; // Importa writeLog
+
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -10,23 +11,29 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const loadUser = async () => {
             try {
+                await writeLog("Iniciando validación del token almacenado...");
                 const token = await getToken();
                 if (token) {
+                    await writeLog(`Token encontrado: ${token}`);
                     const response = await apiClient.get(
                         "/ClienteParticipantes/ValidateToken"
                     );
-                    console.log(
-                        "Respuesta de ValidateToken:",
-                        response.data.message
+                    await writeLog(
+                        `Respuesta de ValidateToken: ${response.data.message}`
                     );
                     setUser({ token });
+                    await writeLog("Usuario autenticado con token válido.");
+                } else {
+                    await writeLog("No se encontró un token almacenado.");
                 }
             } catch (error) {
                 console.error("Error en ValidateToken:", error);
+                await writeLog(`Error en ValidateToken: ${error.message}`);
                 await AsyncStorage.removeItem("token");
                 setUser(null);
             } finally {
                 setLoading(false);
+                await writeLog("Finalizó la validación del token.");
             }
         };
 
@@ -35,6 +42,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
+            await writeLog("Intentando iniciar sesión...");
             const response = await apiClient.post(
                 "/ClienteParticipantes/Login",
                 {
@@ -53,16 +61,28 @@ export const AuthProvider = ({ children }) => {
             };
 
             await AsyncStorage.setItem("token", userMapped.token);
+            await writeLog(`Token guardado: ${userMapped.token}`);
 
             setUser(userMapped);
+            await writeLog(
+                `Inicio de sesión exitoso para el usuario: ${userMapped.email}`
+            );
         } catch (error) {
             console.error("Error en el login:", error);
+            await writeLog(`Error en el login: ${error.message}`);
         }
     };
 
     const logout = async () => {
-        await AsyncStorage.removeItem("token");
-        setUser(null);
+        try {
+            await writeLog("Cerrando sesión...");
+            await AsyncStorage.removeItem("token");
+            setUser(null);
+            await writeLog("Sesión cerrada y token eliminado.");
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+            await writeLog(`Error al cerrar sesión: ${error.message}`);
+        }
     };
 
     return (
