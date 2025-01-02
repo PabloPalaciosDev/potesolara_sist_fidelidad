@@ -1,0 +1,70 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "prettier"
+    ],
+    "rules": {
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+        ],
+        "@typescript-eslint/no-explicit-any": "warn", // Advierte sobre el uso de 'any'
+        "@typescript-eslint/explicit-function-return-type": [
+            "error",
+            {
+                "allowExpressions": true,
+                "allowTypedFunctionExpressions": true
+            }
+        ],
+        "@typescript-eslint/explicit-module-boundary-types": "off", // Opcional: Permite no definir tipos en exportaciones
+        "@typescript-eslint/no-empty-function": "warn", // Advierte sobre funciones vacías
+        "@typescript-eslint/no-inferrable-types": "off", // Permite declarar tipos redundantes si es útil
+        "@typescript-eslint/consistent-type-definitions": ["error", "interface"], // Prefiere 'interface' en lugar de 'type'
+        "@typescript-eslint/ban-ts-comment": [
+            "error",
+            {
+                "ts-expect-error": "allow-with-description"
+            }
+        ],
+        "@typescript-eslint/no-misused-promises": [
+            "error",
+            { "checksVoidReturn": false }
+        ],
+        "@typescript-eslint/prefer-optional-chain": "error", // Prefiere usar cadenas opcionales
+        "@typescript-eslint/prefer-nullish-coalescing": [
+            "error",
+            {
+                "ignoreConditionalTests": false,
+                "ignoreMixedLogicalExpressions": false
+            }
+        ],
+        "@typescript-eslint/consistent-type-imports": [
+            "error",
+            {
+                "prefer": "type-imports",
+                "disallowTypeAnnotations": false
+            }
+        ],
+        "no-console": "warn", // Advierte sobre el uso de console.log
+        "no-debugger": "error", // Error si hay 'debugger'
+        "eqeqeq": ["error", "always"], // Siempre usa triple igualdad
+        "curly": ["error", "all"], // Enforce braces for all control structures
+        "no-duplicate-imports": "error", // Evita imports duplicados
+        "prefer-const": "error", // Prefiere const sobre let si la variable no se reasigna
+        "arrow-body-style": ["error", "as-needed"], // Prefiere funciones de flecha con cuerpo implícito
+        "no-var": "error", // Prohíbe el uso de var
+        "prefer-template": "error", // Prefiere templates string en lugar de concatenación con +
+        "no-shadow": "error", // Evita declarar variables que ya existan en un ámbito superior
+        "object-shorthand": ["error", "always"], // Usa sintaxis de propiedades abreviadas en objetos
+        "no-undef": "off" // Apagado porque TypeScript ya lo maneja
+    },
+    "env": {
+        "browser": true,
+        "node": true,
+        "es6": true
+    }
+}

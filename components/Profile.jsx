@@ -4,9 +4,12 @@ import { Screen } from "./Screen";
 import { Stack } from "expo-router";
 import { AuthContext } from "../utils/AuthProvider";
 import React, { useContext } from "react";
+import { getToken } from "../utils/axios";
 
 export default function ProfileScreen() {
     const { user } = useContext(AuthContext);
+    console.log("Usuario:", user);
+    console.log("Token:", getToken());
     return (
         <Screen>
             <Stack.Screen

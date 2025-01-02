@@ -2,6 +2,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
+import { Platform } from "react-native";
 
 export const apiClient = axios.create({
     baseURL: "https://localhost:7273/api/v1",
@@ -12,7 +13,11 @@ export const apiClient = axios.create({
 const logFilePath = `${FileSystem.documentDirectory}logs.txt`;
 
 // Función para escribir en el archivo de logs
-const writeLog = async (message) => {
+export const writeLog = async (message) => {
+    if (Platform.OS === "web") {
+        console.log("Logs desactivados en web");
+        return;
+    }
     try {
         const timestamp = new Date().toISOString();
         const logMessage = `[${timestamp}] ${message}\n`;
@@ -30,9 +35,22 @@ const writeLog = async (message) => {
 // Función para obtener el token
 export const getToken = async () => {
     try {
-        const token =
-            (await SecureStore.getItemAsync("token")) ||
-            (await AsyncStorage.getItem("token"));
+        let token;
+
+        if (Platform.OS === "web") {
+            // Si estamos en la web, usa localStorage
+            token = localStorage.getItem("token");
+        } else {
+            // En plataformas nativas, intenta primero con SecureStore y luego AsyncStorage
+            token =
+                (await SecureStore.getItemAsync("token")) ||
+                (await AsyncStorage.getItem("token"));
+        }
+
+        if (!token) {
+            console.warn("No se encontró un token almacenado.");
+            await writeLog("No se encontró un token almacenado.");
+        }
         return token;
     } catch (error) {
         console.error("Error al obtener el token:", error);

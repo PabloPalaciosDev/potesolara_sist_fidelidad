@@ -1,13 +1,47 @@
-import { StyleSheet, Text, View, Image } from "react-native";
+import {
+    StyleSheet,
+    Text,
+    View,
+    Image,
+    ActivityIndicator,
+    Alert,
+    TouchableOpacity,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "./Screen";
 import { Stack } from "expo-router";
+import { useState, useContext } from "react";
+import { getCards } from "../services/cards";
+import { AuthContext } from "../utils/AuthProvider";
 
 export default function CardScreen() {
-    const puntos = 7; // Puntos quemados para demostración
+    const { user } = useContext(AuthContext);
+    const [cardData, setCardData] = useState({ puntos: 0 }); // Por defecto, puntos en 0
+    const [loading, setLoading] = useState(false);
+
+    const fetchCardData = async () => {
+        setLoading(true);
+        try {
+            const response = await getCards(user?.id);
+            if (response?.success) {
+                setCardData(response.data);
+            } else {
+                Alert.alert(
+                    "Error",
+                    response?.message || "No se pudo obtener los datos."
+                );
+            }
+        } catch (error) {
+            Alert.alert("Error", "Ocurrió un error al obtener los datos.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const renderPuntitos = () => {
         const puntitos = [];
+        const puntos = cardData?.puntos || 0;
+
         for (let i = 0; i < 10; i++) {
             puntitos.push(
                 <Ionicons
@@ -46,8 +80,19 @@ export default function CardScreen() {
                     <View style={styles.pointsContainer}>
                         {renderPuntitos()}
                     </View>
-                    <Text style={styles.cardPoints}>{puntos}/10</Text>
+                    <Text style={styles.cardPoints}>{cardData.puntos}/10</Text>
                 </View>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={fetchCardData}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>Consultar Puntos</Text>
+                    )}
+                </TouchableOpacity>
             </View>
         </Screen>
     );
@@ -58,6 +103,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        paddingHorizontal: 20,
     },
     card: {
         width: "90%",
@@ -70,6 +116,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+        marginBottom: 20,
     },
     cardImage: {
         width: 100,
@@ -97,5 +144,19 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#52b62c",
         marginTop: 10,
+    },
+    button: {
+        backgroundColor: "#52b62c",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 3,
+    },
+    buttonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "bold",
     },
 });

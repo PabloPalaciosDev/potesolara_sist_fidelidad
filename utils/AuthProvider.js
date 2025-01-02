@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiClient, getToken, writeLog } from "./axios"; // Importa writeLog
+import { apiClient, getToken } from "../utils/axios";
 
 export const AuthContext = createContext();
 
@@ -11,29 +11,37 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const loadUser = async () => {
             try {
-                await writeLog("Iniciando validación del token almacenado...");
                 const token = await getToken();
                 if (token) {
-                    await writeLog(`Token encontrado: ${token}`);
-                    const response = await apiClient.get(
-                        "/ClienteParticipantes/ValidateToken"
-                    );
-                    await writeLog(
-                        `Respuesta de ValidateToken: ${response.data.message}`
-                    );
-                    setUser({ token });
-                    await writeLog("Usuario autenticado con token válido.");
-                } else {
-                    await writeLog("No se encontró un token almacenado.");
+                    // Verificar si ya hay un usuario en AsyncStorage
+                    const storedUser = await AsyncStorage.getItem("user");
+                    if (storedUser) {
+                        setUser(JSON.parse(storedUser));
+                    } else {
+                        // Validar el token si no hay usuario guardado
+                        const response = await apiClient.get(
+                            "/ClienteParticipantes/ValidateToken",
+                            {
+                                headers: { Authorization: `Bearer ${token}` },
+                            }
+                        );
+                        if (response?.data?.success) {
+                            const userData = { token }; // Puedes incluir más datos del usuario si los necesitas
+                            setUser(userData);
+                            await AsyncStorage.setItem(
+                                "user",
+                                JSON.stringify(userData)
+                            );
+                        } else {
+                            await AsyncStorage.removeItem("token");
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error en ValidateToken:", error);
-                await writeLog(`Error en ValidateToken: ${error.message}`);
                 await AsyncStorage.removeItem("token");
-                setUser(null);
             } finally {
                 setLoading(false);
-                await writeLog("Finalizó la validación del token.");
             }
         };
 
@@ -42,7 +50,6 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            await writeLog("Intentando iniciar sesión...");
             const response = await apiClient.post(
                 "/ClienteParticipantes/Login",
                 {
@@ -61,32 +68,47 @@ export const AuthProvider = ({ children }) => {
             };
 
             await AsyncStorage.setItem("token", userMapped.token);
-            await writeLog(`Token guardado: ${userMapped.token}`);
+            await AsyncStorage.setItem("user", JSON.stringify(userMapped)); // Guarda los datos del usuario
 
             setUser(userMapped);
-            await writeLog(
-                `Inicio de sesión exitoso para el usuario: ${userMapped.email}`
-            );
+
+            return true;
         } catch (error) {
             console.error("Error en el login:", error);
-            await writeLog(`Error en el login: ${error.message}`);
+            return false;
         }
     };
 
     const logout = async () => {
         try {
-            await writeLog("Cerrando sesión...");
             await AsyncStorage.removeItem("token");
+            await AsyncStorage.removeItem("user");
             setUser(null);
-            await writeLog("Sesión cerrada y token eliminado.");
         } catch (error) {
             console.error("Error al cerrar sesión:", error);
-            await writeLog(`Error al cerrar sesión: ${error.message}`);
+        }
+    };
+
+    const register = async (data) => {
+        try {
+            const response = await apiClient.post(
+                "/ClienteParticipantes/Create",
+                data
+            );
+            return response.data;
+        } catch (error) {
+            if (error.response && error.response.data) {
+                return error.response.data;
+            }
+
+            return { success: false, message: "Ocurrió un error inesperado." };
         }
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider
+            value={{ user, loading, login, logout, register }}
+        >
             {children}
         </AuthContext.Provider>
     );
