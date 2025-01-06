@@ -42,12 +42,12 @@ export default function CardScreen() {
         const puntitos = [];
         const puntos = cardData?.puntos || 0;
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 12; i++) {
             puntitos.push(
                 <Ionicons
                     key={i}
                     name="ellipse"
-                    size={24}
+                    size={15}
                     color={i < puntos ? "#FFD700" : "#ccc"} // Amarillo para puntos llenos, gris para vacíos
                     style={styles.pointIcon}
                 />
@@ -80,7 +80,7 @@ export default function CardScreen() {
                     <View style={styles.pointsContainer}>
                         {renderPuntitos()}
                     </View>
-                    <Text style={styles.cardPoints}>{cardData.puntos}/10</Text>
+                    <Text style={styles.cardPoints}>{cardData.puntos}/12</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.button}

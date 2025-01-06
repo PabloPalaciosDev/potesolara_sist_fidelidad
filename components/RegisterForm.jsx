@@ -11,7 +11,9 @@ import {
     Pressable,
     ScrollView,
     SafeAreaView,
+    Platform,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker"; // Importar DateTimePicker
 import { AuthContext } from "../utils/AuthProvider";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -44,6 +46,9 @@ const RegisterForm = () => {
         password: Yup.string()
             .required("La contraseña es obligatoria")
             .min(8, "La contraseña debe tener al menos 8 caracteres"),
+        fechaNacimiento: Yup.date()
+            .required("La fecha de nacimiento es obligatoria")
+            .nullable(), // Permitir valores nulos temporalmente hasta que el usuario seleccione una fecha
     });
 
     const handleRegister = async (values, { setSubmitting }) => {
@@ -60,7 +65,9 @@ const RegisterForm = () => {
             }
         } catch (error) {
             console.error("Error en el registro:", error);
-            setModalMessage("Ocurrió un error inesperado. Por favor, inténtalo nuevamente.");
+            setModalMessage(
+                "Ocurrió un error inesperado. Por favor, inténtalo nuevamente."
+            );
             setModalVisible(true);
         } finally {
             setSubmitting(false);
@@ -90,6 +97,8 @@ const RegisterForm = () => {
                         telefono: "",
                         email: "",
                         password: "",
+                        fechaNacimiento: null, // Inicializar fecha de nacimiento como nulo
+                        showDatePicker: false, // Estado interno para mostrar el DateTimePicker
                     }}
                     validationSchema={validationSchema}
                     onSubmit={handleRegister}
@@ -101,6 +110,7 @@ const RegisterForm = () => {
                         values,
                         errors,
                         touched,
+                        setFieldValue,
                         isSubmitting,
                     }) => (
                         <View style={styles.container}>
@@ -117,7 +127,9 @@ const RegisterForm = () => {
                                 style={styles.input}
                             />
                             {touched.cedula && errors.cedula && (
-                                <Text style={styles.error}>{errors.cedula}</Text>
+                                <Text style={styles.error}>
+                                    {errors.cedula}
+                                </Text>
                             )}
                             <TextInput
                                 placeholder="Nombre"
@@ -127,7 +139,9 @@ const RegisterForm = () => {
                                 style={styles.input}
                             />
                             {touched.nombre && errors.nombre && (
-                                <Text style={styles.error}>{errors.nombre}</Text>
+                                <Text style={styles.error}>
+                                    {errors.nombre}
+                                </Text>
                             )}
                             <TextInput
                                 placeholder="Apellido"
@@ -137,7 +151,9 @@ const RegisterForm = () => {
                                 style={styles.input}
                             />
                             {touched.apellido && errors.apellido && (
-                                <Text style={styles.error}>{errors.apellido}</Text>
+                                <Text style={styles.error}>
+                                    {errors.apellido}
+                                </Text>
                             )}
                             <TextInput
                                 placeholder="Teléfono"
@@ -148,7 +164,9 @@ const RegisterForm = () => {
                                 style={styles.input}
                             />
                             {touched.telefono && errors.telefono && (
-                                <Text style={styles.error}>{errors.telefono}</Text>
+                                <Text style={styles.error}>
+                                    {errors.telefono}
+                                </Text>
                             )}
                             <TextInput
                                 placeholder="Email"
@@ -170,22 +188,85 @@ const RegisterForm = () => {
                                 style={styles.input}
                             />
                             {touched.password && errors.password && (
-                                <Text style={styles.error}>{errors.password}</Text>
+                                <Text style={styles.error}>
+                                    {errors.password}
+                                </Text>
                             )}
+
+                            {/* Campo de selección de fecha de nacimiento */}
+                            <View style={styles.datePickerContainer}>
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        setFieldValue("showDatePicker", true)
+                                    }
+                                    style={styles.datePickerButton}
+                                >
+                                    <Text style={styles.datePickerText}>
+                                        {values.fechaNacimiento
+                                            ? new Date(
+                                                  values.fechaNacimiento
+                                              ).toLocaleDateString()
+                                            : "Seleccionar fecha de nacimiento"}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {touched.fechaNacimiento &&
+                                    errors.fechaNacimiento && (
+                                        <Text style={styles.error}>
+                                            {errors.fechaNacimiento}
+                                        </Text>
+                                    )}
+
+                                {/* Mostrar DateTimePicker si el usuario presiona el botón */}
+                                {values.showDatePicker && (
+                                    <DateTimePicker
+                                        value={
+                                            values.fechaNacimiento
+                                                ? new Date(
+                                                      values.fechaNacimiento
+                                                  )
+                                                : new Date()
+                                        }
+                                        mode="date"
+                                        display="default"
+                                        onChange={(event, selectedDate) => {
+                                            setFieldValue(
+                                                "showDatePicker",
+                                                false
+                                            );
+                                            if (selectedDate) {
+                                                setFieldValue(
+                                                    "fechaNacimiento",
+                                                    selectedDate.toISOString()
+                                                );
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </View>
+
                             <TouchableOpacity
                                 style={styles.registerButton}
                                 onPress={handleSubmit}
                                 disabled={isSubmitting}
                             >
                                 <Text style={styles.buttonText}>
-                                    {isSubmitting ? "Registrando..." : "Registrarse"}
+                                    {isSubmitting
+                                        ? "Registrando..."
+                                        : "Registrarse"}
                                 </Text>
                             </TouchableOpacity>
 
-                            <View style={{ flexDirection: "row", marginTop: 20 }}>
+                            <View
+                                style={{ flexDirection: "row", marginTop: 20 }}
+                            >
                                 <Text>¿Ya tienes una cuenta? </Text>
-                                <TouchableOpacity onPress={() => router.replace("/login")}>
-                                    <Text style={{ color: "#4CAF50" }}>Inicia sesión</Text>
+                                <TouchableOpacity
+                                    onPress={() => router.replace("/login")}
+                                >
+                                    <Text style={{ color: "#4CAF50" }}>
+                                        Inicia sesión
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
 
@@ -198,12 +279,16 @@ const RegisterForm = () => {
                             >
                                 <View style={styles.modalContainer}>
                                     <View style={styles.modalContent}>
-                                        <Text style={styles.modalText}>{modalMessage}</Text>
+                                        <Text style={styles.modalText}>
+                                            {modalMessage}
+                                        </Text>
                                         <Pressable
                                             style={styles.modalButton}
                                             onPress={handleModalClose}
                                         >
-                                            <Text style={styles.buttonText}>Continuar</Text>
+                                            <Text style={styles.buttonText}>
+                                                Continuar
+                                            </Text>
                                         </Pressable>
                                     </View>
                                 </View>
@@ -259,6 +344,22 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: "bold",
+    },
+    datePickerContainer: {
+        width: "100%",
+        marginBottom: 20,
+    },
+    datePickerButton: {
+        padding: 10,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 5,
+        backgroundColor: "#fff",
+        alignItems: "center",
+    },
+    datePickerText: {
+        fontSize: 16,
+        color: "#333",
     },
     modalContainer: {
         flex: 1,
