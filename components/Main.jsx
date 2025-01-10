@@ -65,10 +65,10 @@ export default function Main() {
                     </Text>
                 </View>
                 <View style={styles.content}>
-                    <Text style={styles.title}>Eventos</Text>
+                    <Text style={styles.title}>Talleres</Text>
                     {loading ? (
                         <Text style={styles.loadingText}>
-                            Cargando eventos...
+                            Cargando talleres...
                         </Text>
                     ) : eventos.length > 0 ? (
                         <FlatList
@@ -109,7 +109,7 @@ export default function Main() {
                         />
                     ) : (
                         <Text style={styles.noEventsText}>
-                            No hay eventos para este mes
+                            No hay Talleres para este mes
                         </Text>
                     )}
                 </View>

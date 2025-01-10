@@ -82,7 +82,7 @@ export default function EventScreen({ idevento }) {
                     (asistencia) => asistencia.idCliente === user?.id
                 ) ? (
                     <Text style={styles.modalButtonAsistido}>
-                        ¡Ya estás apuntado a este evento!
+                        ¡Ya estás apuntado a este taller!
                     </Text>
                 ) : (
                     <Pressable
@@ -92,8 +92,8 @@ export default function EventScreen({ idevento }) {
                         {/*con emoji de lapiz de tarea */}
                         <Text style={styles.attendButtonText}>
                             {asistido
-                                ? "¡Ya estás apuntado a este evento!"
-                                : "Apuntarse al evento 📝"}
+                                ? "¡Ya estás apuntado a este taller!"
+                                : "Apuntarse al taller 📝"}
                         </Text>
                     </Pressable>
                 )}
@@ -109,7 +109,7 @@ export default function EventScreen({ idevento }) {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
                         <Text style={styles.modalText}>
-                            ¿Deseas apuntarte a este evento?
+                            ¿Deseas apuntarte a este taller?
                         </Text>
                         <View style={styles.modalButtons}>
                             <Pressable
@@ -184,7 +184,7 @@ export default function EventScreen({ idevento }) {
                     {/* Sección de detalles adicionales */}
                     <View style={styles.detailsSection}>
                         <Text style={styles.detailsHeader}>
-                            Detalles del Evento:
+                            Detalles del Taller:
                         </Text>
                         <Text style={styles.detailsText}>
                             📋 {evento?.descripcionEvento}
