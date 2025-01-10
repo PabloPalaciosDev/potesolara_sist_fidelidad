@@ -76,15 +76,6 @@ export default function TabsLayout() {
                     ),
                 }}
             />
-            <Tabs.Screen
-                name="event"
-                options={{
-                    title: "Talleres",
-                    tabBarIcon: ({ color, size }) => (
-                        <EventIcon color={color} size={size} />
-                    ),
-                }}
-            />
         </Tabs>
     );
 }

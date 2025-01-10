@@ -13,11 +13,14 @@ import { Stack } from "expo-router";
 import { useState, useContext } from "react";
 import { getCards } from "../services/cards";
 import { AuthContext } from "../utils/AuthProvider";
+import { handleUnauthorizedError } from "../utils/axios";
+import { useRouter } from "expo-router"; // Para redirigir al login
 
 export default function CardScreen() {
     const { user } = useContext(AuthContext);
     const [cardData, setCardData] = useState({ puntos: 0 }); // Por defecto, puntos en 0
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     const fetchCardData = async () => {
         setLoading(true);
@@ -32,7 +35,13 @@ export default function CardScreen() {
                 );
             }
         } catch (error) {
-            Alert.alert("Error", "Ocurrió un error al obtener los datos.");
+            if (error.isUnauthorized) {
+                // Manejar el error 401 limpiando el token y redirigiendo al login
+                await handleUnauthorizedError(router);
+            } else {
+                console.error("Error al obtener los datos:", error);
+                Alert.alert("Error", "Ocurrió un error al obtener los datos.");
+            }
         } finally {
             setLoading(false);
         }

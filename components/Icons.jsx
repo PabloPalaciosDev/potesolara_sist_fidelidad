@@ -1,6 +1,7 @@
 import React from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Feather from "@expo/vector-icons/Feather";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export const HomeIcon = (props) => (
     <MaterialIcons name="home" size={30} color="white" {...props} />
@@ -20,4 +21,8 @@ export const EventIcon = (props) => (
 
 export const LogoutIcon = (props) => (
     <Feather name="log-out" size={24} color="black" {...props} />
+);
+
+export const ComeBackIcon = (props) => (
+    <Ionicons name="arrow-back" size={24} color="black" {...props} />
 );

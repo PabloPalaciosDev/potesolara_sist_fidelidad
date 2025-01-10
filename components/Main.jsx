@@ -1,34 +1,46 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
-    StyleSheet,
     Text,
     View,
+    StyleSheet,
     FlatList,
-    TouchableOpacity,
+    Pressable,
+    Alert,
 } from "react-native";
+import { useNavigation, Stack, useRouter } from "expo-router";
 import { Screen } from "./Screen";
-import { Stack } from "expo-router";
-import { AuthContext } from "../utils/AuthProvider";
 import { getEventos } from "../services/events";
+import { AuthContext } from "../utils/AuthProvider";
+import { handleUnauthorizedError } from "../utils/axios";
 
 export default function Main() {
-    const { user, login, logout } = useContext(AuthContext);
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const navigation = useNavigation();
+    const router = useRouter(); // Para redirigir al login
+    const { user } = useContext(AuthContext);
 
-    // Cargar eventos al montar el componente
     useEffect(() => {
-        const fetchEventos = async () => {
+        async function fetchEventos() {
+            setLoading(true);
             try {
-                const response = await getEventos();
-                setEventos(response.data); // Guardar los eventos en el estado
+                const data = await getEventos();
+                setEventos(data.data);
             } catch (error) {
-                console.error("Error al obtener eventos:", error);
+                if (error.isUnauthorized) {
+                    // Manejar el error 401 limpiando el token y redirigiendo al login
+                    await handleUnauthorizedError(router);
+                } else {
+                    console.error("Error al cargar eventos:", error);
+                    Alert.alert(
+                        "Error",
+                        "Ocurrió un problema al cargar los eventos."
+                    );
+                }
             } finally {
-                setLoading(false); // Desactivar el indicador de carga
+                setLoading(false);
             }
-        };
-
+        }
         fetchEventos();
     }, []);
 
@@ -46,59 +58,60 @@ export default function Main() {
                     },
                 }}
             />
-            <View style={styles.content}>
-                <View style={styles.panel}>
-                    <Text style={styles.panelText}>
-                        {user
-                            ? `¡Bienvenido, ${user.nombre} ${user.lastname}!`
-                            : "Por favor, inicia sesión"}
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.welcomeText}>
+                        Bienvenido, {user?.nombre} {user?.lastname}
                     </Text>
-                    {/* Sección de noticias */}
-                    <View style={styles.news}>
-                        {/* Título con mes corriente */}
-                        <Text style={styles.newsTitle}>
-                            Eventos de{" "}
-                            {new Date().toLocaleString("es-ES", {
-                                month: "long",
-                            })}
+                </View>
+                <View style={styles.content}>
+                    <Text style={styles.title}>Eventos</Text>
+                    {loading ? (
+                        <Text style={styles.loadingText}>
+                            Cargando eventos...
                         </Text>
-                        {loading ? (
-                            <Text style={styles.loadingText}>
-                                Cargando eventos...
-                            </Text>
-                        ) : eventos.length > 0 ? (
-                            <FlatList
-                                data={eventos}
-                                keyExtractor={(item) => item.idEvento}
-                                renderItem={({ item }) => (
-                                    <View style={styles.eventItem}>
-                                        <Text style={styles.eventName}>
-                                            {item.nombreEvento}
-                                        </Text>
-                                        <Text style={styles.eventDetails}>
-                                            📅 Fecha:{" "}
-                                            {new Date(
-                                                item.fechaEvento
-                                            ).toLocaleDateString("es-ES")}
-                                        </Text>
-                                        <Text style={styles.eventDetails}>
-                                            🕒 Hora: {item.horaEvento}
-                                        </Text>
-                                        <Text style={styles.eventDetails}>
-                                            📍 Lugar: {item.lugarEvento}
-                                        </Text>
-                                    </View>
-                                )}
-                                ItemSeparatorComponent={() => (
-                                    <View style={styles.separator} />
-                                )}
-                            />
-                        ) : (
-                            <Text style={styles.noEventsText}>
-                                No hay eventos para este mes
-                            </Text>
-                        )}
-                    </View>
+                    ) : eventos.length > 0 ? (
+                        <FlatList
+                            data={eventos}
+                            keyExtractor={(item) => item.idEvento}
+                            renderItem={({ item }) => (
+                                <Pressable
+                                    style={styles.eventItem}
+                                    onPress={() =>
+                                        navigation.navigate(`[idevento]`, {
+                                            idevento: item.idEvento,
+                                        })
+                                    }
+                                >
+                                    <Text style={styles.eventName}>
+                                        {item.nombreEvento}
+                                    </Text>
+                                    <Text style={styles.eventDetails}>
+                                        📅 Fecha:{" "}
+                                        {new Date(
+                                            item.fechaEvento
+                                        ).toLocaleDateString("es-ES")}
+                                    </Text>
+                                    <Text style={styles.eventDetails}>
+                                        🕒 Hora: {item.horaEvento}
+                                    </Text>
+                                    <Text style={styles.eventDetails}>
+                                        📍 Lugar: {item.lugarEvento}
+                                    </Text>
+                                    <Text style={styles.eventDetails}>
+                                        💵 Precio: {item.precioEvento}$
+                                    </Text>
+                                </Pressable>
+                            )}
+                            ItemSeparatorComponent={() => (
+                                <View style={styles.separator} />
+                            )}
+                        />
+                    ) : (
+                        <Text style={styles.noEventsText}>
+                            No hay eventos para este mes
+                        </Text>
+                    )}
                 </View>
             </View>
         </Screen>
@@ -106,71 +119,59 @@ export default function Main() {
 }
 
 const styles = StyleSheet.create({
-    content: {
+    container: {
         flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: "#f4f4f4",
     },
-    panel: {
-        width: "90%",
-        alignItems: "center",
+    header: {
+        padding: 16,
     },
-    panelText: {
-        color: "#52b62c",
-        fontSize: 24,
-        textAlign: "center",
-        fontWeight: "bold",
-        marginBottom: 20,
-    },
-    news: {
-        backgroundColor: "#f9f9f9",
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 20,
-        width: "100%",
-        maxHeight: 400, // Altura máxima para la lista de eventos
-        elevation: 3, // Sombra en Android
-        shadowColor: "#000", // Sombra en iOS
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    newsTitle: {
-        color: "#52b62c",
+    welcomeText: {
         fontSize: 18,
+        color: "black",
         fontWeight: "bold",
-        marginBottom: 10,
+    },
+    content: {
+        padding: 16,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 16,
     },
     loadingText: {
-        color: "#333",
         fontSize: 16,
-    },
-    noEventsText: {
         color: "#666",
-        fontSize: 16,
     },
     eventItem: {
-        padding: 15,
-        backgroundColor: "#ffffff",
-        borderRadius: 10,
-        elevation: 2, // Sombra en Android
-        shadowColor: "#000", // Sombra en iOS
+        backgroundColor: "#fff",
+        padding: 16,
+        borderRadius: 8,
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        elevation: 3,
+        marginBottom: 16,
     },
     eventName: {
-        color: "#52b62c",
         fontSize: 18,
         fontWeight: "bold",
-        marginBottom: 5,
+        color: "#333",
+        marginBottom: 8,
     },
     eventDetails: {
-        color: "#555",
         fontSize: 14,
-        marginBottom: 3,
+        color: "#666",
+        marginBottom: 4,
     },
     separator: {
-        height: 10,
+        height: 1,
+        backgroundColor: "#ddd",
+        marginVertical: 8,
+    },
+    noEventsText: {
+        fontSize: 16,
+        color: "#666",
     },
 });

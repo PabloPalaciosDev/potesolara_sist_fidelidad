@@ -1,47 +1,52 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
-import { Platform } from "react-native";
+import { Platform, Alert } from "react-native";
 
 export const apiClient = axios.create({
     baseURL: "https://localhost:7273/api/v1",
     timeout: 10000,
 });
 
-// Ruta del archivo de logs
-const logFilePath = `${FileSystem.documentDirectory}logs.txt`;
-
-// Función para escribir en el archivo de logs
-export const writeLog = async (message) => {
-    if (Platform.OS === "web") {
-        console.log("Logs desactivados en web");
-        return;
-    }
+// Función para limpiar el token del almacenamiento
+export const clearToken = async () => {
     try {
-        const timestamp = new Date().toISOString();
-        const logMessage = `[${timestamp}] ${message}\n`;
-        await FileSystem.writeAsStringAsync(
-            logFilePath,
-            logMessage,
-            { encoding: FileSystem.EncodingType.UTF8, append: true } // Añade al archivo
-        );
-        console.log("Log registrado:", logMessage);
+        if (Platform.OS === "web") {
+            localStorage.removeItem("token");
+        } else {
+            await SecureStore.deleteItemAsync("token");
+            await AsyncStorage.removeItem("token");
+        }
     } catch (error) {
-        console.error("Error al escribir en el archivo de logs:", error);
+        console.error("Error al limpiar el token:", error);
     }
+};
+
+export const handleUnauthorizedError = async (router) => {
+    await clearToken();
+    Alert.alert(
+        "Sesión finalizada",
+        "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+    );
+    router.replace("/login");
+};
+
+// Función para redirigir al login
+export const redirectToLogin = (router) => {
+    Alert.alert(
+        "Sesión finalizada",
+        "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+    );
+    router.replace("/login"); // Redirigir al login
 };
 
 // Función para obtener el token
 export const getToken = async () => {
     try {
         let token;
-
         if (Platform.OS === "web") {
-            // Si estamos en la web, usa localStorage
             token = localStorage.getItem("token");
         } else {
-            // En plataformas nativas, intenta primero con SecureStore y luego AsyncStorage
             token =
                 (await SecureStore.getItemAsync("token")) ||
                 (await AsyncStorage.getItem("token"));
@@ -49,12 +54,10 @@ export const getToken = async () => {
 
         if (!token) {
             console.warn("No se encontró un token almacenado.");
-            await writeLog("No se encontró un token almacenado.");
         }
         return token;
     } catch (error) {
         console.error("Error al obtener el token:", error);
-        await writeLog(`Error al obtener el token: ${error.message}`);
         return null;
     }
 };
@@ -66,28 +69,14 @@ apiClient.interceptors.request.use(
             const token = await getToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
-                await writeLog(
-                    `Solicitud: ${config.method.toUpperCase()} ${
-                        config.url
-                    } con token`
-                );
             } else {
-                await writeLog(
-                    `Solicitud: ${config.method.toUpperCase()} ${
-                        config.url
-                    } sin token`
-                );
             }
         } catch (error) {
             console.error("Error en el interceptor de solicitud:", error);
-            await writeLog(
-                `Error en el interceptor de solicitud: ${error.message}`
-            );
         }
         return config;
     },
     (error) => {
-        writeLog(`Error al configurar la solicitud: ${error.message}`);
         return Promise.reject(error);
     }
 );
@@ -95,48 +84,28 @@ apiClient.interceptors.request.use(
 // Interceptor de respuestas
 apiClient.interceptors.response.use(
     async (response) => {
-        await writeLog(
-            `Respuesta exitosa: ${response.status} en ${response.config.url}`
-        );
         return response;
     },
     async (error) => {
         if (error.response) {
+            const status = error.response.status;
             console.error("Error en la respuesta HTTP:", error.response.data);
-            await writeLog(
-                `Error en respuesta HTTP: ${error.response.status} en ${
-                    error.response.config.url
-                } - ${JSON.stringify(error.response.data)}`
-            );
+
+            if (status === 401) {
+                // Disparar un evento global para que el componente maneje el 401
+                return Promise.reject({ isUnauthorized: true });
+            }
         } else if (error.request) {
             console.error(
                 "No se recibió respuesta del servidor:",
                 error.request
-            );
-            await writeLog(
-                `No se recibió respuesta del servidor en ${error.config?.url}`
             );
         } else {
             console.error(
                 "Error en la configuración de la solicitud:",
                 error.message
             );
-            await writeLog(
-                `Error en configuración de solicitud: ${error.message}`
-            );
         }
         return Promise.reject(error);
     }
 );
-
-// Función para leer los logs (opcional)
-export const readLogs = async () => {
-    try {
-        const logs = await FileSystem.readAsStringAsync(logFilePath, {
-            encoding: FileSystem.EncodingType.UTF8,
-        });
-        console.log("Contenido del archivo de logs:\n", logs);
-    } catch (error) {
-        console.error("Error al leer el archivo de logs:", error);
-    }
-};
