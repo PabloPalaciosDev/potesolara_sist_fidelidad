@@ -134,6 +134,7 @@ export default function EventScreen({ idevento }) {
                             mode="contained"
                             onPress={() => setModalVisible(true)}
                             style={styles.attendButton}
+                            disabled={asistido}
                         >
                             {asistido
                                 ? "¡Ya estás apuntado a este taller!"
