@@ -1,19 +1,23 @@
 import React, { useContext, useState } from "react";
 import {
     View,
-    Text,
-    TextInput,
-    Alert,
     Image,
     StyleSheet,
-    TouchableOpacity,
-    Modal,
-    Pressable,
     ScrollView,
     SafeAreaView,
     Platform,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker"; // Importar DateTimePicker
+import {
+    TextInput,
+    Button,
+    Card,
+    Text,
+    Modal,
+    Portal,
+    Paragraph,
+    Title,
+} from "react-native-paper";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { AuthContext } from "../utils/AuthProvider";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -48,23 +52,20 @@ const RegisterForm = () => {
             .min(8, "La contraseña debe tener al menos 8 caracteres"),
         fechaNacimiento: Yup.date()
             .required("La fecha de nacimiento es obligatoria")
-            .nullable(), // Permitir valores nulos temporalmente hasta que el usuario seleccione una fecha
+            .nullable(),
     });
 
     const handleRegister = async (values, { setSubmitting }) => {
         try {
             const response = await register(values);
-
             if (response?.success) {
                 setModalMessage("¡Registro exitoso! Ahora se iniciará sesión.");
                 setModalVisible(true);
             } else {
-                console.log("Error del servidor:", response);
                 setModalMessage(response?.message || "Error al registrar.");
                 setModalVisible(true);
             }
         } catch (error) {
-            console.error("Error en el registro:", error);
             setModalMessage(
                 "Ocurrió un error inesperado. Por favor, inténtalo nuevamente."
             );
@@ -80,8 +81,6 @@ const RegisterForm = () => {
             const loginResponse = await login();
             if (loginResponse) {
                 router.replace("/");
-            } else {
-                Alert.alert("Error", "No se pudo iniciar sesión");
             }
         }
     };
@@ -97,8 +96,8 @@ const RegisterForm = () => {
                         telefono: "",
                         email: "",
                         password: "",
-                        fechaNacimiento: null, // Inicializar fecha de nacimiento como nulo
-                        showDatePicker: false, // Estado interno para mostrar el DateTimePicker
+                        fechaNacimiento: null,
+                        showDatePicker: false,
                     }}
                     validationSchema={validationSchema}
                     onSubmit={handleRegister}
@@ -113,111 +112,123 @@ const RegisterForm = () => {
                         setFieldValue,
                         isSubmitting,
                     }) => (
-                        <View style={styles.container}>
-                            <Text style={styles.title}>Registrarse</Text>
-                            <Image
-                                source={require("../assets/potessolara.png")}
-                                style={styles.image}
-                            />
-                            <TextInput
-                                placeholder="Cédula"
-                                value={values.cedula}
-                                onChangeText={handleChange("cedula")}
-                                onBlur={handleBlur("cedula")}
-                                style={styles.input}
-                            />
-                            {touched.cedula && errors.cedula && (
-                                <Text style={styles.error}>
-                                    {errors.cedula}
-                                </Text>
-                            )}
-                            <TextInput
-                                placeholder="Nombre"
-                                value={values.nombre}
-                                onChangeText={handleChange("nombre")}
-                                onBlur={handleBlur("nombre")}
-                                style={styles.input}
-                            />
-                            {touched.nombre && errors.nombre && (
-                                <Text style={styles.error}>
-                                    {errors.nombre}
-                                </Text>
-                            )}
-                            <TextInput
-                                placeholder="Apellido"
-                                value={values.apellido}
-                                onChangeText={handleChange("apellido")}
-                                onBlur={handleBlur("apellido")}
-                                style={styles.input}
-                            />
-                            {touched.apellido && errors.apellido && (
-                                <Text style={styles.error}>
-                                    {errors.apellido}
-                                </Text>
-                            )}
-                            <TextInput
-                                placeholder="Teléfono"
-                                value={values.telefono}
-                                onChangeText={handleChange("telefono")}
-                                onBlur={handleBlur("telefono")}
-                                keyboardType="numeric"
-                                style={styles.input}
-                            />
-                            {touched.telefono && errors.telefono && (
-                                <Text style={styles.error}>
-                                    {errors.telefono}
-                                </Text>
-                            )}
-                            <TextInput
-                                placeholder="Email"
-                                value={values.email}
-                                onChangeText={handleChange("email")}
-                                onBlur={handleBlur("email")}
-                                keyboardType="email-address"
-                                style={styles.input}
-                            />
-                            {touched.email && errors.email && (
-                                <Text style={styles.error}>{errors.email}</Text>
-                            )}
-                            <TextInput
-                                placeholder="Contraseña"
-                                value={values.password}
-                                onChangeText={handleChange("password")}
-                                onBlur={handleBlur("password")}
-                                secureTextEntry
-                                style={styles.input}
-                            />
-                            {touched.password && errors.password && (
-                                <Text style={styles.error}>
-                                    {errors.password}
-                                </Text>
-                            )}
+                        <Card style={styles.card}>
+                            <Card.Content>
+                                <Title style={styles.title}>
+                                    Registrarse
+                                </Title>
+                                <Image
+                                    source={require("../assets/potessolara.png")}
+                                    style={styles.image}
+                                />
+                                <TextInput
+                                    label="Cédula"
+                                    value={values.cedula}
+                                    onChangeText={handleChange("cedula")}
+                                    onBlur={handleBlur("cedula")}
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={touched.cedula && !!errors.cedula}
+                                />
+                                {touched.cedula && errors.cedula && (
+                                    <Text style={styles.error}>
+                                        {errors.cedula}
+                                    </Text>
+                                )}
+                                <TextInput
+                                    label="Nombre"
+                                    value={values.nombre}
+                                    onChangeText={handleChange("nombre")}
+                                    onBlur={handleBlur("nombre")}
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={touched.nombre && !!errors.nombre}
+                                />
+                                {touched.nombre && errors.nombre && (
+                                    <Text style={styles.error}>
+                                        {errors.nombre}
+                                    </Text>
+                                )}
+                                <TextInput
+                                    label="Apellido"
+                                    value={values.apellido}
+                                    onChangeText={handleChange("apellido")}
+                                    onBlur={handleBlur("apellido")}
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={touched.apellido && !!errors.apellido}
+                                />
+                                {touched.apellido && errors.apellido && (
+                                    <Text style={styles.error}>
+                                        {errors.apellido}
+                                    </Text>
+                                )}
+                                <TextInput
+                                    label="Teléfono"
+                                    value={values.telefono}
+                                    onChangeText={handleChange("telefono")}
+                                    onBlur={handleBlur("telefono")}
+                                    keyboardType="numeric"
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={touched.telefono && !!errors.telefono}
+                                />
+                                {touched.telefono && errors.telefono && (
+                                    <Text style={styles.error}>
+                                        {errors.telefono}
+                                    </Text>
+                                )}
+                                <TextInput
+                                    label="Email"
+                                    value={values.email}
+                                    onChangeText={handleChange("email")}
+                                    onBlur={handleBlur("email")}
+                                    keyboardType="email-address"
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={touched.email && !!errors.email}
+                                />
+                                {touched.email && errors.email && (
+                                    <Text style={styles.error}>
+                                        {errors.email}
+                                    </Text>
+                                )}
+                                <TextInput
+                                    label="Contraseña"
+                                    value={values.password}
+                                    onChangeText={handleChange("password")}
+                                    onBlur={handleBlur("password")}
+                                    secureTextEntry
+                                    mode="outlined"
+                                    style={styles.input}
+                                    error={touched.password && !!errors.password}
+                                />
+                                {touched.password && errors.password && (
+                                    <Text style={styles.error}>
+                                        {errors.password}
+                                    </Text>
+                                )}
 
-                            {/* Campo de selección de fecha de nacimiento */}
-                            <View style={styles.datePickerContainer}>
-                                <TouchableOpacity
+                                {/* Fecha de nacimiento */}
+                                <Button
+                                    mode="outlined"
                                     onPress={() =>
                                         setFieldValue("showDatePicker", true)
                                     }
                                     style={styles.datePickerButton}
                                 >
-                                    <Text style={styles.datePickerText}>
-                                        {values.fechaNacimiento
-                                            ? new Date(
-                                                  values.fechaNacimiento
-                                              ).toLocaleDateString()
-                                            : "Seleccionar fecha de nacimiento"}
-                                    </Text>
-                                </TouchableOpacity>
-
+                                    {values.fechaNacimiento
+                                        ? new Date(
+                                              values.fechaNacimiento
+                                          ).toLocaleDateString()
+                                        : "Seleccionar fecha de nacimiento"}
+                                </Button>
                                 {touched.fechaNacimiento &&
                                     errors.fechaNacimiento && (
                                         <Text style={styles.error}>
                                             {errors.fechaNacimiento}
                                         </Text>
                                     )}
-
-                                {/* Mostrar DateTimePicker si el usuario presiona el botón */}
                                 {values.showDatePicker && (
                                     <DateTimePicker
                                         value={
@@ -228,7 +239,11 @@ const RegisterForm = () => {
                                                 : new Date()
                                         }
                                         mode="date"
-                                        display="default"
+                                        display={
+                                            Platform.OS === "ios"
+                                                ? "inline"
+                                                : "default"
+                                        }
                                         onChange={(event, selectedDate) => {
                                             setFieldValue(
                                                 "showDatePicker",
@@ -243,59 +258,50 @@ const RegisterForm = () => {
                                         }}
                                     />
                                 )}
-                            </View>
 
-                            <TouchableOpacity
-                                style={styles.registerButton}
-                                onPress={handleSubmit}
-                                disabled={isSubmitting}
-                            >
-                                <Text style={styles.buttonText}>
+                                <Button
+                                    mode="contained"
+                                    onPress={handleSubmit}
+                                    disabled={isSubmitting}
+                                    style={styles.registerButton}
+                                >
                                     {isSubmitting
                                         ? "Registrando..."
                                         : "Registrarse"}
-                                </Text>
-                            </TouchableOpacity>
-
-                            <View
-                                style={{ flexDirection: "row", marginTop: 20 }}
-                            >
-                                <Text>¿Ya tienes una cuenta? </Text>
-                                <TouchableOpacity
-                                    onPress={() => router.replace("/login")}
-                                >
-                                    <Text style={{ color: "#4CAF50" }}>
+                                </Button>
+                                <Text style={{ marginTop: 20 }}>
+                                    ¿Ya tienes una cuenta?{" "}
+                                    <Text
+                                        style={styles.link}
+                                        onPress={() =>
+                                            router.replace("/login")
+                                        }
+                                    >
                                         Inicia sesión
                                     </Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Modal para mostrar mensajes */}
-                            <Modal
-                                animationType="slide"
-                                transparent={true}
-                                visible={modalVisible}
-                                onRequestClose={() => setModalVisible(false)}
-                            >
-                                <View style={styles.modalContainer}>
-                                    <View style={styles.modalContent}>
-                                        <Text style={styles.modalText}>
-                                            {modalMessage}
-                                        </Text>
-                                        <Pressable
-                                            style={styles.modalButton}
-                                            onPress={handleModalClose}
-                                        >
-                                            <Text style={styles.buttonText}>
-                                                Continuar
-                                            </Text>
-                                        </Pressable>
-                                    </View>
-                                </View>
-                            </Modal>
-                        </View>
+                                </Text>
+                            </Card.Content>
+                        </Card>
                     )}
                 </Formik>
+                <Portal>
+                    <Modal
+                        visible={modalVisible}
+                        onDismiss={handleModalClose}
+                        contentContainerStyle={styles.modalContent}
+                    >
+                        <Paragraph style={styles.modalText}>
+                            {modalMessage}
+                        </Paragraph>
+                        <Button
+                            mode="contained"
+                            onPress={handleModalClose}
+                            style={styles.modalButton}
+                        >
+                            Continuar
+                        </Button>
+                    </Modal>
+                </Portal>
             </ScrollView>
         </SafeAreaView>
     );
@@ -306,90 +312,56 @@ export default RegisterForm;
 const styles = StyleSheet.create({
     scrollContainer: {
         flexGrow: 1,
-        justifyContent: "center",
         padding: 20,
     },
-    container: {
-        alignItems: "center",
+    card: {
+        padding: 16,
+        borderRadius: 10,
     },
     title: {
         fontSize: 24,
-        fontWeight: "bold",
+        textAlign: "center",
         marginBottom: 20,
+        fontWeight: "bold",
     },
     image: {
-        width: 150,
-        height: 150,
+        width: 120,
+        height: 120,
         resizeMode: "contain",
+        alignSelf: "center",
         marginBottom: 20,
     },
     input: {
-        width: "100%",
-        borderBottomWidth: 1,
-        borderBottomColor: "#ccc",
-        marginBottom: 20,
-        padding: 8,
-        fontSize: 16,
-    },
-    registerButton: {
-        backgroundColor: "#4CAF50",
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        marginTop: 20,
-        width: "100%",
-        alignItems: "center",
-    },
-    buttonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    datePickerContainer: {
-        width: "100%",
-        marginBottom: 20,
+        marginBottom: 16,
     },
     datePickerButton: {
-        padding: 10,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 5,
-        backgroundColor: "#fff",
-        alignItems: "center",
+        marginBottom: 16,
     },
-    datePickerText: {
-        fontSize: 16,
-        color: "#333",
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-    },
-    modalContent: {
-        backgroundColor: "#fff",
-        borderRadius: 10,
-        padding: 20,
-        alignItems: "center",
-        elevation: 5,
-        width: "80%",
-    },
-    modalText: {
-        fontSize: 18,
-        marginBottom: 20,
-        textAlign: "center",
-    },
-    modalButton: {
+    registerButton: {
+        marginTop: 20,
         backgroundColor: "#4CAF50",
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        alignItems: "center",
     },
     error: {
         color: "red",
         fontSize: 12,
         marginBottom: 10,
+    },
+    link: {
+        color: "#4CAF50",
+        fontWeight: "bold",
+    },
+    modalContent: {
+        backgroundColor: "white",
+        padding: 20,
+        marginHorizontal: 20,
+        borderRadius: 10,
+        alignItems: "center",
+    },
+    modalText: {
+        marginBottom: 20,
+        textAlign: "center",
+    },
+    modalButton: {
+        marginTop: 10,
     },
 });

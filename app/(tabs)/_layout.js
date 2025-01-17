@@ -70,7 +70,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="cardpoints"
                 options={{
-                    title: "Puntos Solara",
+                    title: "Recompensas",
                     tabBarIcon: ({ color, size }) => (
                         <CardMembershipIcon color={color} size={size} />
                     ),

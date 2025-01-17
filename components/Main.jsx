@@ -4,7 +4,6 @@ import {
     View,
     StyleSheet,
     FlatList,
-    Pressable,
     Alert,
 } from "react-native";
 import { useNavigation, Stack, useRouter } from "expo-router";
@@ -12,6 +11,7 @@ import { Screen } from "./Screen";
 import { getEventos } from "../services/events";
 import { AuthContext } from "../utils/AuthProvider";
 import { handleUnauthorizedError } from "../utils/axios";
+import { Card, Title, Paragraph, ActivityIndicator, Button } from "react-native-paper";
 
 export default function Main() {
     const [eventos, setEventos] = useState([]);
@@ -42,7 +42,7 @@ export default function Main() {
             }
         }
         fetchEventos();
-    }, []);
+    }, [router]);
 
     return (
         <Screen>
@@ -60,48 +60,65 @@ export default function Main() {
             />
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <Text style={styles.welcomeText}>
+                    <Title style={styles.welcomeText}>
                         Bienvenido, {user?.nombre} {user?.lastname}
-                    </Text>
+                    </Title>
                 </View>
                 <View style={styles.content}>
-                    <Text style={styles.title}>Talleres</Text>
+                    <Title style={styles.title}>Talleres</Title>
                     {loading ? (
-                        <Text style={styles.loadingText}>
-                            Cargando talleres...
-                        </Text>
+                        <ActivityIndicator
+                            animating={true}
+                            size="large"
+                            color="#52b62c"
+                            style={styles.loadingIndicator}
+                        />
                     ) : eventos.length > 0 ? (
                         <FlatList
                             data={eventos}
-                            keyExtractor={(item) => item.idEvento}
+                            keyExtractor={(item) => item.idEvento.toString()}
                             renderItem={({ item }) => (
-                                <Pressable
-                                    style={styles.eventItem}
+                                <Card
+                                    style={styles.card}
                                     onPress={() =>
-                                        navigation.navigate(`[idevento]`, {
+                                        navigation.navigate("[idevento]", {
                                             idevento: item.idEvento,
                                         })
                                     }
                                 >
-                                    <Text style={styles.eventName}>
-                                        {item.nombreEvento}
-                                    </Text>
-                                    <Text style={styles.eventDetails}>
-                                        📅 Fecha:{" "}
-                                        {new Date(
-                                            item.fechaEvento
-                                        ).toLocaleDateString("es-ES")}
-                                    </Text>
-                                    <Text style={styles.eventDetails}>
-                                        🕒 Hora: {item.horaEvento}
-                                    </Text>
-                                    <Text style={styles.eventDetails}>
-                                        📍 Lugar: {item.lugarEvento}
-                                    </Text>
-                                    <Text style={styles.eventDetails}>
-                                        💵 Precio: {item.precioEvento}$
-                                    </Text>
-                                </Pressable>
+                                    <Card.Content>
+                                        <Title style={styles.eventName}>
+                                            {item.nombreEvento}
+                                        </Title>
+                                        <Paragraph style={styles.eventDetails}>
+                                            📅 Fecha:{" "}
+                                            {new Date(
+                                                item.fechaEvento
+                                            ).toLocaleDateString("es-ES")}
+                                        </Paragraph>
+                                        <Paragraph style={styles.eventDetails}>
+                                            🕒 Hora: {item.horaEvento}
+                                        </Paragraph>
+                                        <Paragraph style={styles.eventDetails}>
+                                            📍 Lugar: {item.lugarEvento}
+                                        </Paragraph>
+                                        <Paragraph style={styles.eventDetails}>
+                                            💵 Precio: {item.precioEvento}$
+                                        </Paragraph>
+                                    </Card.Content>
+                                    <Card.Actions>
+                                        <Button
+                                            mode="contained"
+                                            onPress={() =>
+                                                navigation.navigate("[idevento]", {
+                                                    idevento: item.idEvento,
+                                                })
+                                            }
+                                        >
+                                            Ver detalles
+                                        </Button>
+                                    </Card.Actions>
+                                </Card>
                             )}
                             ItemSeparatorComponent={() => (
                                 <View style={styles.separator} />
@@ -139,20 +156,14 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         marginBottom: 16,
     },
-    loadingText: {
-        fontSize: 16,
-        color: "#666",
+    loadingIndicator: {
+        marginTop: 20,
     },
-    eventItem: {
-        backgroundColor: "#fff",
-        padding: 16,
-        borderRadius: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+    card: {
         marginBottom: 16,
+        borderRadius: 8,
+        backgroundColor: "#fff",
+        elevation: 3,
     },
     eventName: {
         fontSize: 18,
@@ -166,12 +177,11 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     separator: {
-        height: 1,
-        backgroundColor: "#ddd",
-        marginVertical: 8,
+        height: 8,
     },
     noEventsText: {
         fontSize: 16,
         color: "#666",
     },
 });
+

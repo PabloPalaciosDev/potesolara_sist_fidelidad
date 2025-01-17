@@ -1,5 +1,7 @@
 {
     "conventionalCommits.scopes": [
-        "Funcionalidades"
+        "Funcionalidades",
+        "Dependencias",
+        "Estilos-Componentes"
     ]
 }

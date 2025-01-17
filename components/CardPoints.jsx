@@ -1,25 +1,20 @@
-import {
-    StyleSheet,
-    Text,
-    View,
-    Image,
-    ActivityIndicator,
-    Alert,
-    TouchableOpacity,
-} from "react-native";
+import React, { useState, useContext } from "react";
+import { View, StyleSheet, Image, Alert } from "react-native";
+import { ActivityIndicator, Card, Text, Button, Snackbar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "./Screen";
 import { Stack } from "expo-router";
-import { useState, useContext } from "react";
 import { getCards } from "../services/cards";
 import { AuthContext } from "../utils/AuthProvider";
 import { handleUnauthorizedError } from "../utils/axios";
-import { useRouter } from "expo-router"; // Para redirigir al login
+import { useRouter } from "expo-router";
 
 export default function CardScreen() {
     const { user } = useContext(AuthContext);
     const [cardData, setCardData] = useState({ puntos: 0 }); // Por defecto, puntos en 0
     const [loading, setLoading] = useState(false);
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
     const router = useRouter();
 
     const fetchCardData = async () => {
@@ -36,7 +31,6 @@ export default function CardScreen() {
             }
         } catch (error) {
             if (error.isUnauthorized) {
-                // Manejar el error 401 limpiando el token y redirigiendo al login
                 await handleUnauthorizedError(router);
             } else {
                 console.error("Error al obtener los datos:", error);
@@ -45,6 +39,36 @@ export default function CardScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const isBirthdayToday = () => {
+        if (!user?.nacimiento) return false;
+
+        const today = new Date();
+        const birthDate = new Date(user.nacimiento);
+
+        return (
+            today.getDate() === birthDate.getDate() &&
+            today.getMonth() === birthDate.getMonth()
+        );
+    };
+
+    const handleClaimReward = (pointsRequired) => {
+        if (cardData.puntos >= pointsRequired) {
+            setSnackbarMessage(`¡Puedes reclamar tu premio de ${pointsRequired} puntos con Potes Solara!`);
+        } else {
+            setSnackbarMessage(`Necesitas ${pointsRequired} puntos para reclamar este premio.`);
+        }
+        setSnackbarVisible(true);
+    };
+
+    const handleClaimBirthdayReward = () => {
+        if (isBirthdayToday()) {
+            setSnackbarMessage("¡Feliz cumpleaños! 🎉 Puedes reclamar tu recompensa.");
+        } else {
+            setSnackbarMessage("Hoy no es tu cumpleaños.");
+        }
+        setSnackbarVisible(true);
     };
 
     const renderPuntitos = () => {
@@ -80,28 +104,124 @@ export default function CardScreen() {
                 }}
             />
             <View style={styles.container}>
-                <View style={styles.card}>
-                    <Image
-                        source={require("../assets/potessolara.png")}
-                        style={styles.cardImage}
-                    />
-                    <Text style={styles.cardTitle}>Puntos Acumulados</Text>
-                    <View style={styles.pointsContainer}>
-                        {renderPuntitos()}
-                    </View>
-                    <Text style={styles.cardPoints}>{cardData.puntos}/12</Text>
-                </View>
-                <TouchableOpacity
-                    style={styles.button}
+                <Card style={styles.card}>
+                    <Card.Content style={styles.cardContent}>
+                        <Image
+                            source={require("../assets/potessolara.png")}
+                            style={styles.cardImage}
+                        />
+                        <Text style={styles.cardTitle}>Puntos Acumulados</Text>
+                        <View style={styles.pointsContainer}>
+                            {renderPuntitos()}
+                        </View>
+                        <Text style={styles.cardPoints}>
+                            {cardData.puntos}/12
+                        </Text>
+                    </Card.Content>
+                </Card>
+                <Button
+                    mode="contained"
                     onPress={fetchCardData}
+                    loading={loading}
                     disabled={loading}
+                    style={styles.button}
                 >
-                    {loading ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                        <Text style={styles.buttonText}>Consultar Puntos</Text>
-                    )}
-                </TouchableOpacity>
+                    {loading ? "Consultando..." : "Consultar Puntos"}
+                </Button>
+
+                {/* Sección de recompensas */}
+                <View style={styles.rewardsContainer}>
+                    <Card style={styles.rewardCard}>
+                        <Card.Content>
+                            <Text style={styles.rewardTitle}>Recompensas</Text>
+                            {/* Premio por 6 puntos */}
+                            <View style={styles.rewardItem}>
+                                <Text style={styles.rewardText}>
+                                    Premio por 6 puntos:
+                                </Text>
+                                <Button
+                                    mode="outlined"
+                                    onPress={() => handleClaimReward(6)}
+                                    icon={
+                                        cardData.puntos >= 6
+                                            ? "check-circle"
+                                            : "alert-circle-outline"
+                                    }
+                                    textColor={
+                                        cardData.puntos >= 6
+                                            ? "#52b62c"
+                                            : "#ccc"
+                                    }
+                                    style={styles.rewardButton}
+                                >
+                                    {cardData.puntos >= 6
+                                        ? "Disponible"
+                                        : "No disponible"}
+                                </Button>
+                            </View>
+                            {/* Premio por 12 puntos */}
+                            <View style={styles.rewardItem}>
+                                <Text style={styles.rewardText}>
+                                    Premio por 12 puntos:
+                                </Text>
+                                <Button
+                                    mode="outlined"
+                                    onPress={() => handleClaimReward(12)}
+                                    icon={
+                                        cardData.puntos >= 12
+                                            ? "check-circle"
+                                            : "alert-circle-outline"
+                                    }
+                                    textColor={
+                                        cardData.puntos >= 12
+                                            ? "#52b62c"
+                                            : "#ccc"
+                                    }
+                                    style={styles.rewardButton}
+                                >
+                                    {cardData.puntos >= 12
+                                        ? "Disponible"
+                                        : "No disponible"}
+                                </Button>
+                            </View>
+                            {/* Premio de cumpleaños */}
+                            <View style={styles.rewardItem}>
+                                <Text style={styles.rewardText}>
+                                    Recompensa de cumpleaños:
+                                </Text>
+                                <Button
+                                    mode="outlined"
+                                    onPress={handleClaimBirthdayReward}
+                                    icon={
+                                        isBirthdayToday()
+                                            ? "gift"
+                                            : "calendar-alert"
+                                    }
+                                    textColor={
+                                        isBirthdayToday() ? "#52b62c" : "#ccc"
+                                    }
+                                    style={styles.rewardButton}
+                                >
+                                    {isBirthdayToday()
+                                        ? "Disponible"
+                                        : "No disponible"}
+                                </Button>
+                            </View>
+                        </Card.Content>
+                    </Card>
+                </View>
+
+                {/* Snackbar para notificaciones */}
+                <Snackbar
+                    visible={snackbarVisible}
+                    onDismiss={() => setSnackbarVisible(false)}
+                    action={{
+                        label: "Cerrar",
+                        onPress: () => setSnackbarVisible(false),
+                    }}
+                >
+                    {snackbarMessage}
+                </Snackbar>
             </View>
         </Screen>
     );
@@ -113,19 +233,17 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         paddingHorizontal: 20,
+        backgroundColor: "#f4f4f4",
     },
     card: {
         width: "90%",
-        backgroundColor: "#fff",
         borderRadius: 10,
-        padding: 20,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
         elevation: 3,
         marginBottom: 20,
+    },
+    cardContent: {
+        alignItems: "center",
+        padding: 20,
     },
     cardImage: {
         width: 100,
@@ -138,6 +256,7 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#333",
         marginBottom: 10,
+        textAlign: "center",
     },
     pointsContainer: {
         flexDirection: "row",
@@ -156,16 +275,34 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: "#52b62c",
-        paddingVertical: 12,
-        paddingHorizontal: 20,
+        width: "90%",
+        paddingVertical: 10,
         borderRadius: 5,
-        alignItems: "center",
-        justifyContent: "center",
+    },
+    rewardsContainer: {
+        width: "90%",
+        marginTop: 20,
+    },
+    rewardCard: {
+        borderRadius: 10,
         elevation: 3,
     },
-    buttonText: {
-        color: "#fff",
-        fontSize: 16,
+    rewardTitle: {
+        fontSize: 20,
         fontWeight: "bold",
+        marginBottom: 10,
+        textAlign: "center",
+    },
+    rewardItem: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 15,
+    },
+    rewardText: {
+        fontSize: 16,
+    },
+    rewardButton: {
+        borderRadius: 20,
     },
 });
