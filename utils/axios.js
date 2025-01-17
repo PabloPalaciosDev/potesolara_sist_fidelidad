@@ -2,9 +2,10 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform, Alert } from "react-native";
+import { BASE_URL } from "@env";
 
 export const apiClient = axios.create({
-    baseURL: "https://localhost:7273/api/v1",
+    baseURL: BASE_URL,
     timeout: 10000,
 });
 

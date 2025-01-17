@@ -2,6 +2,7 @@
     "conventionalCommits.scopes": [
         "Funcionalidades",
         "Dependencias",
-        "Estilos-Componentes"
+        "Estilos-Componentes",
+        "Deploy"
     ]
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiClient, getToken } from "../utils/axios";
+import { VALIDATE_TOKEN_ENDPOINT, LOGIN_ENDPOINT, REGISTER_ENDPOINT } from "@env";
 
 export const AuthContext = createContext();
 
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }) => {
                     } else {
                         // Validar el token si no hay usuario guardado
                         const response = await apiClient.get(
-                            "/ClienteParticipantes/ValidateToken",
+                            VALIDATE_TOKEN_ENDPOINT,
                             {
                                 headers: { Authorization: `Bearer ${token}` },
                             }
@@ -51,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const response = await apiClient.post(
-                "/ClienteParticipantes/Login",
+                LOGIN_ENDPOINT,
                 {
                     email,
                     password,
@@ -92,12 +93,12 @@ export const AuthProvider = ({ children }) => {
     const register = async (data) => {
         try {
             const response = await apiClient.post(
-                "/ClienteParticipantes/Create",
+                REGISTER_ENDPOINT,
                 data
             );
             return response.data;
         } catch (error) {
-            if (error.response && error.response.data) {
+            if (error.response?.data) {
                 return error.response.data;
             }
 
